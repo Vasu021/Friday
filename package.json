@@ -1,0 +1,27 @@
+{
+  "name": "friday",
+  "productName": "Friday",
+  "version": "0.1.0",
+  "description": "An AI screen guide for macOS: watches your screen, answers questions by voice, and points at and draws on the screen to explain things.",
+  "license": "MIT",
+  "private": true,
+  "main": "src/main.js",
+  "type": "commonjs",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev",
+    "dist:mac": "electron-builder --mac",
+    "pack": "electron-builder --dir"
+  },
+  "dependencies": {
+    "@google/genai": "^2.22.0",
+    "dotenv": "^17.0.0"
+  },
+  "devDependencies": {
+    "electron": "^44.4.1",
+    "electron-builder": "^26.15.3"
+  }
+}

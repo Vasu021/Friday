@@ -1,0 +1,59 @@
+:root {
+  --bg: #16161a;
+  --fg: #e8e8ec;
+  --muted: #8a8a99;
+  --ok: #4ade80;
+  --warn: #fbbf24;
+  --bad: #f87171;
+  --card: #1f1f26;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  padding: 24px;
+  font: 14px/1.5 -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--fg);
+  -webkit-user-select: none;
+}
+
+h1 { margin: 0; font-size: 22px; letter-spacing: -0.01em; }
+.tagline { margin: 2px 0 20px; color: var(--muted); font-size: 12px; }
+
+.checks { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+
+.check {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--card);
+}
+
+.check::before { content: "•"; color: var(--muted); }
+.check.ok::before { content: "✓"; color: var(--ok); }
+.check.warn::before { content: "!"; color: var(--warn); }
+.check.bad::before { content: "✗"; color: var(--bad); }
+
+.check .label { flex: 1; }
+.check .detail { color: var(--muted); font-size: 12px; }
+
+button {
+  font: inherit;
+  font-size: 12px;
+  color: var(--fg);
+  background: #32323d;
+  border: 0;
+  border-radius: 6px;
+  padding: 4px 10px;
+  cursor: pointer;
+}
+button:hover { background: #3f3f4d; }
+
+footer { margin-top: 24px; font-size: 12px; }
+footer p { margin: 2px 0; }
+.muted { color: var(--muted); }
+code { background: var(--card); padding: 1px 5px; border-radius: 4px; }

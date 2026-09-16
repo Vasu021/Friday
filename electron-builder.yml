@@ -1,0 +1,40 @@
+appId: com.vasushekhar.friday
+productName: Friday
+copyright: Copyright © 2026 Vasu Shekhar
+
+directories:
+  output: dist
+  buildResources: assets
+
+files:
+  - src/**/*
+  - skins/**/*
+  - package.json
+  - "!**/*.map"
+
+mac:
+  category: public.app-category.productivity
+  target:
+    - target: dmg
+      arch:
+        - arm64
+        - x64
+  # Unsigned builds are fine for personal use (right-click → Open the first time).
+  # Public distribution needs an Apple Developer account. See PLAN.md §9 Phase 6.
+  identity: null
+  hardenedRuntime: false
+  extendInfo:
+    # macOS permission prompts — the strings the user sees in the dialogs.
+    NSMicrophoneUsageDescription: Friday listens when you hold the push-to-talk key so it can answer your questions.
+    NSCameraUsageDescription: Not used by Friday.
+    NSAppleEventsUsageDescription: Friday uses accessibility information to point at on-screen elements more precisely.
+
+dmg:
+  title: ${productName}
+  contents:
+    - x: 130
+      y: 220
+    - x: 410
+      y: 220
+      type: link
+      path: /Applications

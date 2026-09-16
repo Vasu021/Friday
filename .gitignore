@@ -1,0 +1,28 @@
+# Dependencies
+node_modules/
+
+# Secrets — never commit the real API key
+.env
+.env.local
+
+# Build output
+dist/
+out/
+build/
+*.dmg
+*.zip
+
+# Local Claude Code settings (per-machine, not shared)
+.claude/settings.local.json
+
+# Local models / binaries (whisper.cpp, ggml weights)
+models/
+bin/
+
+# macOS
+.DS_Store
+*.swp
+
+# Logs
+*.log
+npm-debug.log*

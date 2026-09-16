@@ -8,7 +8,8 @@ User-facing setup instructions live in `README.md`.
 
 ## Stack
 - Electron with plain HTML/CSS/JavaScript (no framework unless needed)
-- Google Gemini API (free tier, Flash-tier vision model) for vision + reasoning
+- A user-chosen vision model for vision + reasoning: Gemini (free tier),
+  Ollama (local, no key), Anthropic Claude, or OpenAI
 - Whisper (whisper.cpp) for speech-to-text; built-in `speechSynthesis` for TTS
 - electron-builder for the `.dmg`
 - Target: macOS first
@@ -24,9 +25,19 @@ User-facing setup instructions live in `README.md`.
 - After finishing a phase, tick its box in the README roadmap.
 - Keep the file structure from `docs/PLAN.md` §8; keep the project small.
 - The assistant's name and wake word is "Friday".
-- The API key comes from `.env` (`GEMINI_API_KEY`); never hard-code or commit it.
+- The user picks their AI provider and enters the key in the app's setup UI on
+  first launch. Keys are encrypted via Electron `safeStorage` (`src/secrets.js`)
+  and never reach the renderer. `.env` still works as a fallback. Never
+  hard-code or commit a key.
+- Providers are declared in `src/providers.js`; adding one means an entry there
+  plus a `call<Name>` method in `src/ai.js`. The setup UI builds itself from
+  that registry, so it needs no changes.
 - The overlay must be transparent, click-through, and always on top, and
   must not appear in the screenshots sent to the AI.
+- Friday's resting state is the orb (`src/orb/`), not the chat panel. The orb
+  window is resized to fit its visible content — a transparent window still
+  swallows clicks in its empty area. Closing the panel hides it rather than
+  destroying it, because the panel owns `speechSynthesis`.
 - All screen coordinate conversion goes through `src/coords.js`
   (handle Retina scale factor and multiple monitors).
 - Screenshots stay in memory only; never write them to disk.
@@ -34,8 +45,12 @@ User-facing setup instructions live in `README.md`.
   defensively and fall back to text-only answers if parsing fails.
 
 ## Current state
-Phase 0 (setup) is done: dependencies installed, build config in place, and
-`npm start` opens a preflight window that reports the Electron version, whether
-`GEMINI_API_KEY` loaded, and the macOS Screen Recording / Microphone permission
-status. `src/main.js` and `src/chat/` hold only that preflight code — Phase 1
-replaces it with the real windows and hotkeys.
+Phases 0-4 are built and Phase 5 is partial. See `docs/PROGRESS.md` for the
+authoritative status, the deviations from the plan, and what is still open.
+
+Verified working end to end against Gemini: real capture, a real round trip,
+spoken answers, and correct on-screen pointing.
+`npm test` (75 unit tests) passes.
+
+Still outstanding: OCR snapping, the "Hey Friday" wake word, proactive tips,
+and the `.dmg` build.

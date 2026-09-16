@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self'; script-src 'self';" />
+    <title>Friday</title>
+    <link rel="stylesheet" href="orb.css" />
+  </head>
+  <body>
+    <div class="dock" id="dock">
+      <!-- Only shown while expanded; the ball keeps its place on the right. -->
+      <div class="tray" id="tray">
+        <input id="quick" type="text" placeholder="Ask Friday…" autocomplete="off" spellcheck="false" />
+        <span class="hint" id="hint">Ready</span>
+      </div>
+
+      <button class="ball" id="ball" data-state="ready" title="Click to open Friday" aria-label="Open Friday">
+        <span class="core" aria-hidden="true"></span>
+        <span class="dot" id="watching" aria-hidden="true"></span>
+      </button>
+    </div>
+
+    <script src="orb.js"></script>
+  </body>
+</html>

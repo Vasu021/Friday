@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self' 'unsafe-inline'; script-src 'self'; img-src 'self' data:;" />
+    <title>Friday Overlay</title>
+    <link rel="stylesheet" href="overlay.css" />
+  </head>
+  <body>
+    <!-- Shapes go in the SVG layer, the pointer and bubble are DOM so they can
+         use CSS transitions for movement. -->
+    <svg id="shapes" aria-hidden="true"></svg>
+
+    <div id="pointer" class="pointer" data-state="idle">
+      <div class="pointer-art"></div>
+      <div class="pointer-pulse"></div>
+    </div>
+
+    <div id="bubble" class="bubble" role="status"></div>
+
+    <div id="watching" class="watching" hidden>
+      <span class="dot"></span><span class="watching-text">Friday is watching</span>
+    </div>
+
+    <script src="overlay.js"></script>
+  </body>
+</html>

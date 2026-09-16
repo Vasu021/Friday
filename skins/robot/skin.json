@@ -1,0 +1,8 @@
+{
+  "id": "robot",
+  "name": "Robot",
+  "accent": "#38bdf8",
+  "art": "linear-gradient(160deg, #7dd3fc 0%, #38bdf8 55%, #0284c7 100%)",
+  "radius": "12px",
+  "size": 46
+}

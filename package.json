@@ -12,13 +12,17 @@
   },
   "scripts": {
     "start": "electron .",
+    "test": "node --test test/",
     "dev": "electron . --dev",
     "dist:mac": "electron-builder --mac",
     "pack": "electron-builder --dir"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.126.0",
     "@google/genai": "^2.22.0",
-    "dotenv": "^17.0.0"
+    "dotenv": "^17.0.0",
+    "openai": "^7.15.0",
+    "zod": "^4.6.5"
   },
   "devDependencies": {
     "electron": "^44.4.1",

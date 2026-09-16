@@ -1,0 +1,8 @@
+{
+  "id": "arrow",
+  "name": "Arrow",
+  "accent": "#38bdf8",
+  "art": "linear-gradient(145deg, #e8e8ef 0%, #b9b9c8 100%)",
+  "radius": "6px 50% 50% 50%",
+  "size": 38
+}

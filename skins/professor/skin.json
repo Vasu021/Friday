@@ -1,0 +1,8 @@
+{
+  "id": "professor",
+  "name": "Professor",
+  "accent": "#ffd23f",
+  "art": "radial-gradient(circle at 34% 30%, #fff3b0 0%, #ffd23f 45%, #f59e0b 100%)",
+  "radius": "50%",
+  "size": 48
+}

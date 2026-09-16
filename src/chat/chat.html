@@ -2,23 +2,127 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self'; script-src 'self';" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self'; script-src 'self'; media-src 'self' blob:;" />
     <title>Friday</title>
     <link rel="stylesheet" href="chat.css" />
   </head>
   <body>
-    <header>
-      <h1>Friday</h1>
-      <p class="tagline">AI screen guide — Phase 0 preflight</p>
+    <header class="titlebar">
+      <div class="brand">
+        <strong>Friday</strong>
+      </div>
+      <div class="status" id="status" data-state="ready">Ready</div>
+      <button id="settings-toggle" class="icon-button" title="Settings" aria-label="Settings">⚙</button>
     </header>
 
-    <ul id="checks" class="checks">
-      <li class="check pending">Checking environment…</li>
-    </ul>
+    <nav class="modes" id="modes" role="tablist">
+      <button class="mode" data-mode="guide" aria-selected="true">Guide</button>
+      <button class="mode" data-mode="explain" aria-selected="false">Explain</button>
+      <button class="mode" data-mode="chat" aria-selected="false">Chat only</button>
+    </nav>
 
-    <footer>
-      <p>Next: Phase 1 — the transparent click-through overlay.</p>
-      <p class="muted">See <code>docs/PLAN.md</code> §9.</p>
+    <section id="setup" class="setup" hidden>
+      <h2 id="setup-title">Choose your AI</h2>
+      <p class="setup-intro">
+        Friday needs a model that can look at your screen. Pick one you have access to —
+        your key is encrypted and stored on this Mac only.
+      </p>
+
+      <div class="provider-list" id="provider-list" role="radiogroup" aria-labelledby="setup-title"></div>
+
+      <div class="provider-config" id="provider-config" hidden>
+        <label class="row block" id="key-row">
+          <span id="key-label">API key</span>
+          <input type="password" id="api-key" autocomplete="off" spellcheck="false" placeholder="Paste your key" />
+          <small id="key-hint"></small>
+        </label>
+
+        <label class="row block" id="host-row" hidden>
+          <span>Ollama address</span>
+          <input type="text" id="ollama-host" spellcheck="false" />
+        </label>
+
+        <label class="row block">
+          <span>Model</span>
+          <select id="model"></select>
+          <input type="text" id="model-custom" spellcheck="false" placeholder="Type a model name" hidden />
+          <small id="model-hint"></small>
+        </label>
+      </div>
+
+      <div class="setup-actions">
+        <button id="setup-save" class="primary">Save and test</button>
+        <button id="setup-cancel" class="chip" hidden>Cancel</button>
+      </div>
+
+      <p class="setup-result" id="setup-result" hidden></p>
+    </section>
+
+    <section id="settings" class="settings" hidden>
+      <div class="panel-head">
+        <h2>Settings</h2>
+        <button id="settings-close" class="icon-button" title="Back to chat (Esc)" aria-label="Back to chat">✕</button>
+      </div>
+
+      <div class="row">
+        <span>AI provider</span>
+        <span class="provider-current" id="provider-current">—</span>
+        <button id="provider-change" class="chip">Change</button>
+      </div>
+
+      <label class="row block">
+        <span>Screen Friday watches</span>
+        <select id="display"></select>
+        <small id="display-hint"></small>
+      </label>
+
+      <label class="row">
+        <span>Pointer skin</span>
+        <select id="skin"></select>
+      </label>
+
+      <label class="row">
+        <span>Speak answers</span>
+        <input type="checkbox" id="speak" checked />
+      </label>
+
+      <label class="row block">
+        <span>Voice</span>
+        <select id="voice"></select>
+        <small>macOS ships a basic voice. Download a Premium one in System
+          Settings → Accessibility → Spoken Content for much better quality.</small>
+      </label>
+
+      <label class="row">
+        <span>Capture every</span>
+        <select id="interval">
+          <option value="2000">2s</option>
+          <option value="2500" selected>2.5s</option>
+          <option value="4000">4s</option>
+        </select>
+      </label>
+
+      <label class="row block">
+        <span>Never capture these apps</span>
+        <input type="text" id="blocklist" placeholder="1Password, Banking, Messages" />
+        <small>Comma-separated. Matched against the frontmost app name.</small>
+      </label>
+
+      <div class="env" id="env"></div>
+    </section>
+
+    <main id="log" class="log" aria-live="polite"></main>
+
+    <div class="composer">
+      <button id="mic" class="mic" title="Push to talk (⌥ Space)" aria-label="Push to talk">🎙</button>
+      <input id="input" type="text" placeholder="Ask Friday about your screen…" autocomplete="off" />
+      <button id="send" class="send" aria-label="Send">↑</button>
+    </div>
+
+    <footer class="toolbar">
+      <button id="pause" class="chip">Pause <kbd>⌥P</kbd></button>
+      <button id="clear" class="chip">Clear screen <kbd>⌥C</kbd></button>
+      <button id="stop" class="chip">Stop talking <kbd>Esc</kbd></button>
     </footer>
 
     <script src="chat.js"></script>

@@ -154,3 +154,83 @@ test('display id 0 is honoured rather than treated as "no selection"', () => {
   const result = coords.chooseDisplay([zero, external], 0, { x: 2000, y: 400 });
   assert.equal(result.display.id, 0, '0 is a real id, not a falsy blank');
 });
+
+// --- pairing a capturer source with the screen it actually shows ----------
+//
+// The bug these cover: macOS handed back a source for the built-in display
+// while Friday believed it had captured the external one, so the answer was
+// about the right screen and the circles were drawn on the other.
+
+const BUILTIN = { id: 1, label: 'Built-in Retina Display', bounds: { x: 0, y: 0, width: 1710, height: 1107 } };
+const EXTERNAL = { id: 2, label: 'LG UltraFine', bounds: { x: 1710, y: 0, width: 2560, height: 1440 } };
+const BOTH = [BUILTIN, EXTERNAL];
+
+const src = (displayId, id) => ({
+  id: id || `screen:${displayId}:0`,
+  name: 'Entire screen',
+  display_id: displayId === null ? '' : String(displayId),
+});
+
+test('sourceDisplayId reads the reported display_id', () => {
+  assert.equal(coords.sourceDisplayId(src(2)), '2');
+});
+
+test('sourceDisplayId falls back to the source id when display_id is empty', () => {
+  assert.equal(coords.sourceDisplayId({ id: 'screen:2:0', display_id: '' }), '2');
+});
+
+test('sourceDisplayId treats a zero display_id as unreported', () => {
+  assert.equal(coords.sourceDisplayId({ id: 'screen:7:0', display_id: '0' }), '7');
+});
+
+test('sourceDisplayId gives up rather than guessing', () => {
+  assert.equal(coords.sourceDisplayId({ id: 'window:123:0', display_id: '' }), null);
+  assert.equal(coords.sourceDisplayId(null), null);
+});
+
+test('the source for the wanted screen is used as-is', () => {
+  const picked = coords.pickSource([src(1), src(2)], EXTERNAL, BOTH);
+  assert.equal(picked.source.id, 'screen:2:0');
+  assert.equal(picked.display.id, 2);
+  assert.equal(picked.substituted, false);
+});
+
+test('an empty display_id still matches through the source id', () => {
+  const sources = [{ id: 'screen:2:0', name: 'Entire screen', display_id: '' }];
+  const picked = coords.pickSource(sources, EXTERNAL, BOTH);
+  assert.equal(picked.display.id, 2);
+  assert.equal(picked.substituted, false);
+});
+
+test('a substituted source is reported as the screen it really shows', () => {
+  // Only the built-in came back, but the external was asked for. The frame
+  // must be labelled display 1, or the drawings go to display 2.
+  const picked = coords.pickSource([src(1)], EXTERNAL, BOTH);
+  assert.equal(picked.source.id, 'screen:1:0');
+  assert.equal(picked.display.id, 1, 'the frame must carry the captured screen, not the wanted one');
+  assert.equal(picked.substituted, true);
+});
+
+test('one screen and one source need no display_id at all', () => {
+  const sources = [{ id: 'weird', name: 'Entire screen', display_id: '' }];
+  const picked = coords.pickSource(sources, BUILTIN, [BUILTIN]);
+  assert.equal(picked.display.id, 1);
+  assert.equal(picked.substituted, false);
+});
+
+test('an unidentifiable source with several screens is refused, not guessed', () => {
+  const sources = [{ id: 'weird', name: 'Entire screen', display_id: '' }];
+  assert.equal(coords.pickSource(sources, EXTERNAL, BOTH), null);
+});
+
+test('no sources at all is refused', () => {
+  assert.equal(coords.pickSource([], EXTERNAL, BOTH), null);
+  assert.equal(coords.pickSource(null, EXTERNAL, BOTH), null);
+});
+
+test('a source for a screen that is no longer attached is not used', () => {
+  // display 3 was unplugged; its source lingers in the list.
+  const picked = coords.pickSource([src(3), src(1)], EXTERNAL, BOTH);
+  assert.equal(picked.display.id, 1, 'skips the source whose display is gone');
+  assert.equal(picked.substituted, true);
+});

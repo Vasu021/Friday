@@ -664,14 +664,18 @@ function renderEnv(env) {
   }
 }
 
+/** The pinned screen as the picker currently has it; null means follow the cursor. */
+function currentDisplayId() {
+  const value = document.getElementById('display').value;
+  return value ? Number(value) : null;
+}
+
 function saveSettings() {
   const patch = {
     speak: document.getElementById('speak').checked,
     voice: document.getElementById('voice').value || null,
     intervalMs: Number(document.getElementById('interval').value),
-    displayId: document.getElementById('display').value
-      ? Number(document.getElementById('display').value)
-      : null,
+    displayId: currentDisplayId(),
     skin: document.getElementById('skin').value,
     blocklist: document
       .getElementById('blocklist')
@@ -766,6 +770,14 @@ window.friday.onSpeak((reply) => {
 window.friday.onToggleMic(guardedToggleRecording);
 window.friday.onStopSpeaking(stopSpeaking);
 window.friday.onNotice((text) => addMessage('system', text));
+
+// Plugging a monitor in while the settings panel is open used to leave the
+// screen picker listing yesterday's monitors, so nothing you chose there
+// matched a screen that existed.
+window.friday.onDisplaysChanged((displays) => {
+  if (settingsEl.hidden) return;
+  renderDisplayOptions(displays, currentDisplayId());
+});
 
 // ---- start ----
 

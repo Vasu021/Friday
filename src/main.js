@@ -127,6 +127,27 @@ function handleDisplayLost() {
   }
 }
 
+/**
+ * macOS handed back a different screen than the pinned one. The answer will be
+ * about the screen we actually got, and the drawings will land there too, so
+ * the only thing left to do is stop the user wondering which screen it read.
+ */
+function handleWrongScreen({ wanted, got }) {
+  const name = (display) => display.label || `display ${display.id}`;
+  toChat(
+    'friday:notice',
+    `macOS gave Friday no picture of ${name(wanted)}, so it is reading ${name(got)} instead — ` +
+      'and pointing there too, rather than drawing on a screen it never saw. ' +
+      'macOS only grants Screen Recording for the monitors attached at launch, so ' +
+      'quitting and reopening Friday with that monitor plugged in usually fixes it.',
+  );
+}
+
+/** The screen list changed, so any open picker in the panel is now stale. */
+function notifyDisplaysChanged() {
+  toChat('friday:displays-changed', describeDisplays());
+}
+
 // ---------------------------------------------------------------- settings
 
 function settingsPath() {
@@ -364,8 +385,26 @@ function syncOverlays() {
   }
 }
 
+/**
+ * The overlay covering one display, or null.
+ *
+ * There is deliberately no "any overlay will do" fallback here. Falling back to
+ * some other screen is how drawings end up circling empty desktop on a monitor
+ * the user never asked about: the answer looks right, the pointing is nonsense.
+ * A miss means the display list moved under us, so re-sync once and try again.
+ */
 function overlayFor(displayId) {
-  return overlays.get(displayId) || overlays.values().next().value || null;
+  if (displayId === null || displayId === undefined) return null;
+
+  const hit = overlays.get(displayId);
+  if (hit && !hit.isDestroyed()) return hit;
+
+  syncOverlays();
+  const retry = overlays.get(displayId);
+  if (retry && !retry.isDestroyed()) return retry;
+
+  if (DEV) console.warn(`[overlay] no overlay for display ${displayId}; not drawing`);
+  return null;
 }
 
 function eachOverlay(fn) {
@@ -376,7 +415,8 @@ function eachOverlay(fn) {
 
 function toOverlay(channel, payload, displayId = activeDisplayId) {
   const overlay = overlayFor(displayId);
-  if (overlay && !overlay.isDestroyed()) overlay.webContents.send(channel, payload);
+  if (overlay) overlay.webContents.send(channel, payload);
+  else if (DEV) console.warn(`[overlay] dropped "${channel}" -- no overlay for display ${displayId}`);
 }
 
 /** In --dev, surface renderer errors in the terminal instead of swallowing them. */
@@ -782,6 +822,7 @@ if (!app.requestSingleInstanceLock()) {
     capture = new Capture({
       hideDuringCapture,
       onDisplayLost: handleDisplayLost,
+      onWrongScreen: handleWrongScreen,
     });
     capture.setBlocklist(settings.blocklist);
     capture.setTargetDisplay(settings.displayId);
@@ -796,14 +837,24 @@ if (!app.requestSingleInstanceLock()) {
 
     if (!paused) capture.start(settings.intervalMs);
 
-    screen.on('display-added', syncOverlays);
+    screen.on('display-added', () => {
+      syncOverlays();
+      notifyDisplaysChanged();
+    });
     screen.on('display-removed', () => {
       syncOverlays();
+      // A frame from a screen that no longer exists must not keep routing
+      // drawings, or they land on whatever overlay inherits the id.
+      if (!overlays.has(activeDisplayId)) activeDisplayId = null;
       // Re-resolve now rather than at the next question, so the user is told
       // straight away instead of quietly getting a different screen.
       if (settings.displayId !== null) capture.targetDisplay();
+      notifyDisplaysChanged();
     });
-    screen.on('display-metrics-changed', syncOverlays);
+    screen.on('display-metrics-changed', () => {
+      syncOverlays();
+      notifyDisplaysChanged();
+    });
 
     app.on('activate', () => {
       showPanel(true);

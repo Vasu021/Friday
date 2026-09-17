@@ -19,10 +19,14 @@ const JPEG_QUALITY = 72;
 const DIFF_SIZE = 32;
 
 class Capture {
-  constructor({ onFrame, hideDuringCapture, onDisplayLost } = {}) {
+  constructor({ onFrame, hideDuringCapture, onDisplayLost, onWrongScreen } = {}) {
     this.onFrame = onFrame || (() => {});
     this.hideDuringCapture = hideDuringCapture || null;
     this.onDisplayLost = onDisplayLost || (() => {});
+    // The system handed back a different screen than the one we asked for.
+    this.onWrongScreen = onWrongScreen || (() => {});
+    // Only warn when the substitution changes, not on every tick.
+    this.lastSubstitution = null;
     // null means "whichever display the cursor is on".
     this.targetDisplayId = null;
     this.latest = null;
@@ -65,6 +69,7 @@ class Capture {
     // A different screen means the change-detection baseline is meaningless.
     this.lastSignature = null;
     this.latest = null;
+    this.lastSubstitution = null;
   }
 
   /**
@@ -142,14 +147,30 @@ class Capture {
       if (restore) await restore();
     }
 
-    const source =
-      sources.find((s) => String(s.display_id) === String(display.id)) || sources[0];
-    if (!source || source.thumbnail.isEmpty()) return null;
+    // Which source actually shows which screen. Never assume the source we get
+    // back is the screen we asked for: if the image comes from one monitor
+    // while `frame.display` names another, every box_2d is mapped onto the
+    // wrong screen and the drawings land where the user never looked.
+    const picked = coords.pickSource(sources, display, screen.getAllDisplays());
+    if (!picked) {
+      this.lastSkipReason =
+        'the system returned no capture source that could be matched to a screen';
+      return null;
+    }
+
+    const { source, display: captured, substituted } = picked;
+    if (source.thumbnail.isEmpty()) return null;
+
+    if (substituted) this.noteSubstitution(display, captured);
+    else this.lastSubstitution = null;
 
     const image = source.thumbnail;
     const size = image.getSize();
     const frame = {
-      display,
+      // The display this image is really of -- what the overlay routing and
+      // every coordinate conversion downstream keys off.
+      display: captured,
+      requestedDisplay: display,
       width: size.width,
       height: size.height,
       // Held in memory only. Never written to disk.
@@ -161,6 +182,18 @@ class Capture {
     this.lastChangeScore = frame.changeScore;
     this.latest = frame;
     return frame;
+  }
+
+  /**
+   * macOS gave us a different screen than the one asked for. Say so once per
+   * change: the capture still works, but it is not the screen that was pinned,
+   * and silently answering about the wrong monitor is the confusing outcome.
+   */
+  noteSubstitution(wanted, got) {
+    const key = `${wanted.id}->${got.id}`;
+    if (this.lastSubstitution === key) return;
+    this.lastSubstitution = key;
+    this.onWrongScreen({ wanted, got });
   }
 
   /**

@@ -41,6 +41,8 @@ contextBridge.exposeInMainWorld('friday', {
   onToggleMic: (cb) => on('friday:toggle-mic', cb),
   onStopSpeaking: (cb) => on('friday:stop-speaking', cb),
   onNotice: (cb) => on('friday:notice', cb),
+  // A monitor was plugged in, unplugged or rearranged.
+  onDisplaysChanged: (cb) => on('friday:displays-changed', cb),
 
   // --- main -> overlay ---
   onDraw: (cb) => on('friday:draw', cb),

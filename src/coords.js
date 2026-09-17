@@ -81,6 +81,67 @@ function imageToDip(point, display) {
   return { x: point.x / scale, y: point.y / scale };
 }
 
+/**
+ * The display id a desktopCapturer source belongs to, as a string.
+ *
+ * macOS reports `display_id` as a string, and some Electron/macOS combinations
+ * leave it empty for the non-primary screens. The source id is always shaped
+ * `screen:<display_id>:<index>`, so it is a reliable second try.
+ *
+ * @returns {string|null} null when the source cannot be tied to a display.
+ */
+function sourceDisplayId(source) {
+  if (!source) return null;
+
+  const reported = source.display_id;
+  if (reported !== undefined && reported !== null && String(reported) !== '' && String(reported) !== '0') {
+    return String(reported);
+  }
+
+  const fromId = /^screen:(\d+):/.exec(String(source.id || ''));
+  return fromId ? fromId[1] : null;
+}
+
+/**
+ * Pair the screen we want with the capturer source that actually shows it.
+ *
+ * Getting this wrong is worse than failing: if the image comes from one screen
+ * while the caller believes it came from another, every box_2d is mapped onto
+ * the wrong monitor and the drawings land on a screen the user never asked
+ * about. So a source is only ever returned together with the display it really
+ * shows, and an unidentifiable source is refused rather than guessed at.
+ *
+ * @param {Array} sources   desktopCapturer screen sources
+ * @param {object} wanted   the display we asked to capture
+ * @param {Array} displays  every attached display
+ * @returns {{source: object, display: object, substituted: boolean} | null}
+ */
+function pickSource(sources, wanted, displays) {
+  const list = Array.isArray(sources) ? sources.filter(Boolean) : [];
+  if (list.length === 0 || !wanted) return null;
+
+  const exact = list.find((s) => sourceDisplayId(s) === String(wanted.id));
+  if (exact) return { source: exact, display: wanted, substituted: false };
+
+  // One screen, one source: no other reading is possible, so an empty or
+  // mismatched display_id is not a reason to refuse.
+  const all = Array.isArray(displays) ? displays : [];
+  if (list.length === 1 && all.length === 1) {
+    return { source: list[0], display: all[0], substituted: all[0].id !== wanted.id };
+  }
+
+  // The wanted screen has no source of its own. Take the first source we can
+  // actually identify, and report it as the display it shows -- never as the
+  // one that was asked for.
+  for (const source of list) {
+    const id = sourceDisplayId(source);
+    const display = all.find((d) => String(d.id) === id);
+    if (display) return { source, display, substituted: display.id !== wanted.id };
+  }
+
+  return null;
+}
+
 /** The DIP size a capture of this display should produce at full resolution. */
 function imageSizeFor(display) {
   const scale = display.scaleFactor || 1;
@@ -159,6 +220,8 @@ function chooseDisplay(displays, targetId, cursor) {
 module.exports = {
   BOX_SCALE,
   chooseDisplay,
+  sourceDisplayId,
+  pickSource,
   normalizeBox,
   boxToLocalRect,
   boxToScreenRect,

@@ -115,7 +115,7 @@ class AI {
    * @param {string} opts.question
    * @param {{data: string, mimeType: string}|null} opts.image  omitted in Chat Only mode
    * @param {Array<{role: string, text: string}>} opts.history
-   * @param {string} opts.mode  guide | explain | chat
+   * @param {string} opts.mode  guide | chat
    * @returns {Promise<{speech: string, steps: Array, auto_clear_after_ms: number, raw?: string, degraded?: string}>}
    */
   async ask({ question, image, history = [], mode = 'guide' }) {
@@ -202,7 +202,7 @@ class AI {
             systemInstruction: this.systemPrompt,
             responseMimeType: 'application/json',
             temperature: 0.2,
-            // Explain-mode tours run long; 1024 truncated them mid-JSON.
+            // A multi-step tour runs long; 1024 truncated them mid-JSON.
             maxOutputTokens: 4096,
           },
         });
@@ -387,12 +387,7 @@ function rankModels(names, spec) {
 
 function buildUserPrompt(question, mode, hasImage) {
   const lines = [];
-  if (mode === 'explain') {
-    lines.push(
-      'EXPLAIN MODE: give a guided tour. Use several steps in the order you speak ' +
-      'about them, each pointing at the exact region it describes.',
-    );
-  } else if (mode === 'chat' || !hasImage) {
+  if (mode === 'chat' || !hasImage) {
     lines.push(
       'CHAT ONLY MODE: you have no screenshot. Answer from the conversation alone ' +
       'and return an empty steps list.',

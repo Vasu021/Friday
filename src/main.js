@@ -474,7 +474,7 @@ async function hideDuringCapture() {
 // ---------------------------------------------------------------- the main loop
 
 async function handleAsk({ question, mode: requestedMode }) {
-  const askMode = requestedMode || mode;
+  const askMode = normalizeMode(requestedMode || mode);
 
   if (!ai.configured) {
     return { error: `Friday has no key for ${ai.spec.name} yet. Open Settings (⚙) to add one.` };
@@ -535,6 +535,15 @@ async function handleAsk({ question, mode: requestedMode }) {
   }
 
   return reply;
+}
+
+/**
+ * Friday has two modes: it either looks at the screen or it does not. Anything
+ * else -- including "explain", which used to be its own tab -- is guide mode,
+ * which already returns a multi-step tour when the answer needs one.
+ */
+function normalizeMode(value) {
+  return value === 'chat' ? 'chat' : 'guide';
 }
 
 /** Electron sometimes throws errors with no message; never render "undefined". */
@@ -776,7 +785,7 @@ function registerIpc() {
   });
 
   ipcMain.on('friday:set-mode', (_event, next) => {
-    mode = next;
+    mode = normalizeMode(next);
     // Chat Only should not keep capturing in the background.
     if (mode === 'chat') capture.stop();
     else if (!paused) capture.start(settings.intervalMs);

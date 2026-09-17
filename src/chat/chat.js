@@ -14,7 +14,7 @@ const settingsEl = document.getElementById('settings');
 const envEl = document.getElementById('env');
 const setupEl = document.getElementById('setup');
 
-let mode = 'guide';
+let mode = 'guide';  // 'guide' watches the screen, 'chat' does not
 let paused = false;
 let busy = false;
 let speakEnabled = true;

@@ -111,8 +111,9 @@ Then, in the app:
 - Multi-step tours run sequentially with per-step `duration_ms`; a run token
   cancels an in-flight tour if a new answer or a clear arrives.
 - Conversation memory: last 12 turns, sent as Gemini `contents` history.
-- **Explain** mode prompts for a step-by-step tour; **Chat Only** sends no
-  screenshot at all and stops the capture timer.
+- **Chat Only** sends no screenshot at all and stops the capture timer. Guide
+  mode covers the rest: it returns a multi-step tour whenever the answer needs
+  one, so the tour behaviour survived the removal of the Explain tab.
 
 ### Phase 5 — Polish (partial)
 - **The orb.** Friday's resting state is a draggable 64px ball, always on top
@@ -216,5 +217,10 @@ Each of these is a considered trade-off, not an oversight.
    `CLAUDE.md` covers screenshots; a local binary has no other way to receive
    audio. It is written `0o600` and deleted in a `finally` block. Screenshots
    still never touch disk.
-5. **Skins are CSS, not artwork.** No original character art exists yet, and
+5. **There is no Explain mode.** PLAN 5 lists it as a third mode, but it only
+   ever added one line to the prompt asking for a guided tour -- and guide mode
+   already returns multi-step tours on its own. Two modes say the real
+   distinction: Friday either looks at your screen or it does not. Removed at
+   the user's request.
+6. **Skins are CSS, not artwork.** No original character art exists yet, and
    PLAN §4.6 rules out shipping a copyrighted one.
